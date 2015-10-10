@@ -32,7 +32,7 @@ end
 # unset irrelevant variables
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "/Users/NHS/Documents/5IF/PDC/PDC1/projet/venv"
+set -gx VIRTUAL_ENV "/Users/NHS/Documents/5IF/PDC/PDC1/projet/PDC1/venv"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/bin" $PATH
