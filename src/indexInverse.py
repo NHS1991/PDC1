@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+__author__ = 'NHS'
 
 import sys
 import re
+import matplotlib.pyplot as pyplot
 from os import listdir
 from os.path import isfile, join, splitext
 from porterStemmer import PorterStemmer
@@ -127,9 +129,25 @@ class IndexInverse:
             #     break
         self.writeFileIndex()
 
+    def verifyZipf(self):
+        f_read = open(self.indexFile,"r")
+        f_write = open("test1.txt","w")
+        list_fr = []
+        for line in f_read:
+            line_arr = line.split("||")
+            freq = line_arr[1]
+            list_fr.append(freq)
+        list_fr.sort(reverse=True)
+        for freqe in list_fr:
+            f_write.writeln(freqe)
+        pyplot.plot(list_fr)
+        pyplot.savefig("test.png")
+        f_read.close()
+        f_write.close()
 
 if __name__== "__main__":
     index = IndexInverse()
     index.createIndex()
+    index.verifyZipf()
 
 
