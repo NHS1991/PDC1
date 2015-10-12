@@ -15,7 +15,7 @@ porter_stemmer=PorterStemmer()
 
 class IndexInverse:
     def __init__(self):
-        self.index=defaultdict(defaultdict)    #index inversé
+        self.index = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))    #index inversé
 
 
     def getStopwords(self):
@@ -23,12 +23,12 @@ class IndexInverse:
         self.stopwords=dict.fromkeys(stop_words)
 
 
-    def getTerms(self, line):
-        line=line.lower()
-        line=re.sub(r'[^a-z0-9 ]',' ',line) #remplacer les caractères non-alphabetiques par espace
-        line=[x for x in line.split() if x not in self.stopwords]  #eliminer les mots vides
-        line=[porter_stemmer.stem(word) for word in line]
-        return line
+    def getTerms(self, doc):
+        doc=doc.lower()
+        doc=re.sub(r"[^a-z0-9 ]",' ',doc) #remplacer les caractères non-alphabetiques par espace
+        doc=[x for x in doc.split() if x not in self.stopwords]  #eliminer les mots vides
+        doc=[porter_stemmer.stem(word) for word in doc]
+        return doc
 
 
     def getDoc(self):
@@ -88,7 +88,7 @@ class IndexInverse:
         files = [f for f in listdir(docs_path) if isfile(join(docs_path,f)) and splitext(f)[1]=='']
         nb_files = 0
         for file in files:
-            if nb_files<3:
+            # if nb_files<3:
                 file_name = splitext(file)[0]
                 nb_files += 1
                 print 'En cours '+file_name
@@ -99,7 +99,7 @@ class IndexInverse:
                     doc_content = doc_dict['content']
                     doc_text = ''
                     for p_content in doc_content.values():
-                        doc_text += p_content + '\n'
+                        doc_text += p_content
                     doc_id = int(doc_dict['doc_id'])
                     terms = self.getTerms(doc_text)
 
@@ -107,26 +107,21 @@ class IndexInverse:
                     term_doc_dict = {}
                     for position, term in enumerate(terms):
                         try:
-                            term_doc_dict[term][file_name][doc_id].append(position)
+                            term_doc_dict[term][doc_id].append(position)
                         except:
                             try:
-                                term_doc_dict[term][file_name][doc_id] = [position]
+                                term_doc_dict[term][doc_id] = [position]
                             except:
-                                try:
-                                    term_doc_dict[term][file_name] = {}
-                                    term_doc_dict[term][file_name][doc_id] = [position]
-                                except:
-                                    term_doc_dict[term] = {}
-                                    term_doc_dict[term][file_name] = {}
-                                    term_doc_dict[term][file_name][doc_id] = [position]
+                                term_doc_dict[term] = {}
+                                term_doc_dict[term][doc_id] = [position]
 
                         #ajouter indexe du document courant à l'indexe global
                     for term_doc, posting_doc in term_doc_dict.iteritems():
-                        self.index[term_doc].update(posting_doc)
+                            self.index[term_doc][file_name][doc_id] = posting_doc[doc_id]
                     doc_dict = self.getDoc()
                 f_read.close()
-            else:
-                break
+            # else:
+            #     break
         self.writeFileIndex()
 
     def verifyZipf(self):
