@@ -7,9 +7,9 @@ import re
 import matplotlib.pyplot as pyplot
 from os import listdir
 from os.path import isfile, join, splitext
-from porterStemmer import PorterStemmer
 from collections import defaultdict
 from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
 
 porter_stemmer=PorterStemmer()
 
@@ -27,7 +27,7 @@ class IndexInverse:
         line=line.lower()
         line=re.sub(r'[^a-z0-9 ]',' ',line) #remplacer les caractères non-alphabetiques par espace
         line=[x for x in line.split() if x not in self.stopwords]  #eliminer les mots vides
-        line=[porter_stemmer.stem(word, 0, len(word)-1) for word in line]
+        line=[porter_stemmer.stem(word) for word in line]
         return line
 
 
@@ -88,7 +88,7 @@ class IndexInverse:
         files = [f for f in listdir(docs_path) if isfile(join(docs_path,f)) and splitext(f)[1]=='']
         nb_files = 0
         for file in files:
-            # if nb_files<3:
+            if nb_files<3:
                 file_name = splitext(file)[0]
                 nb_files += 1
                 print 'En cours '+file_name
@@ -125,8 +125,8 @@ class IndexInverse:
                         self.index[term_doc].update(posting_doc)
                     doc_dict = self.getDoc()
                 f_read.close()
-            # else:
-            #     break
+            else:
+                break
         self.writeFileIndex()
 
     def verifyZipf(self):
@@ -148,6 +148,6 @@ class IndexInverse:
 if __name__== "__main__":
     index = IndexInverse()
     index.createIndex()
-    index.verifyZipf()
+    # index.verifyZipf()
 
 
