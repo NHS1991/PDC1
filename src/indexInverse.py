@@ -62,16 +62,19 @@ class IndexInverse:
         f=open(self.indexFile, 'w')
         for term in self.index.iterkeys():
             postinglist=[]
-            count = 0
+            count_all = 0
             position_dict = self.index[term]
             for file_name in position_dict.keys():
                 list_pos_by_doc_id = []
+                count_in_doc = 0
                 for doc_id in position_dict[file_name].keys():
                     positions = position_dict[file_name][doc_id]
-                    count += len(positions)
+                    len_pos_list = len(positions)
+                    count_in_doc +=len_pos_list
                     list_pos_by_doc_id.append(str(doc_id)+':'+','.join(str(pos) for pos in positions))
-                postinglist.append(file_name+'|'+";".join(list_pos_by_doc_id))
-            print >> f, term+'||'+str(count)+'||'+'||'.join(postinglist)
+                postinglist.append(file_name+'|'+str(count_in_doc)+"|"+";".join(list_pos_by_doc_id))
+                count_all += count_in_doc
+            print >> f, term+'||'+str(count_all)+'||'+'||'.join(postinglist)
         f.close()
 
 
@@ -85,10 +88,10 @@ class IndexInverse:
         self.getParams()
         self.getStopwords()
         docs_path = self.docsFolder
-        files = [f for f in listdir(docs_path) if isfile(join(docs_path,f)) and splitext(f)[1]=='']
+        files = [f for f in listdir(docs_path) if isfile(join(docs_path,f)) and splitext(f)[1]=='' and 'la' in splitext(f)[0]]
         nb_files = 0
         for file in files:
-            # if nb_files<3:
+            # if nb_files<5:
                 file_name = splitext(file)[0]
                 nb_files += 1
                 print 'En cours '+file_name
@@ -102,7 +105,6 @@ class IndexInverse:
                         doc_text += p_content
                     doc_id = int(doc_dict['doc_id'])
                     terms = self.getTerms(doc_text)
-
                     #construire indexe pour le document courant
                     term_doc_dict = {}
                     for position, term in enumerate(terms):
