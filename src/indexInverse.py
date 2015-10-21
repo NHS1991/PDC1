@@ -4,9 +4,10 @@ __author__ = 'NHS'
 
 import sys
 import re
+import struct
 from os import listdir, makedirs
 from os.path import isfile, join, splitext, exists
-from collections import defaultdict,OrderedDict
+from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 
@@ -72,7 +73,6 @@ class IndexInverse:
         file_write.close()
         print (str(sys.getsizeof(self.index))+"\n")
 
-
     def getParams(self,param):
         self.docsFolder=param[1] #répertoire contient les fichiers docs (latimes)
         self.indexFolder=param[2] #répertoire à écrire les fichiers indexes
@@ -106,20 +106,12 @@ class IndexInverse:
                 print >>mapFile_write, str(doc_id) + ":" + file_name + "-" + docID
                 terms = self.getTerms(doc_text)
                 #construire indexe pour le document courant
-                term_doc_dict = {}
                 for term in terms:
-                    try:
-                        term_doc_dict[term][doc_id] += 1
-                    except:
-                        try:
-                            term_doc_dict[term][doc_id] = 1
-                        except:
-                            term_doc_dict[term] = {}
-                            term_doc_dict[term][doc_id] = 1
-
                 #ajouter indexe du document courant à l'indexe global
-                for term_doc, posting_doc in term_doc_dict.iteritems():
-                    self.index[term_doc][doc_id] = posting_doc[doc_id]
+                    try:
+                        self.index[term][doc_id] +=1 #term_doc_dict[term][doc_id]
+                    except:
+                        self.index[term][doc_id] =1
                     if sys.getsizeof(self.index) > 1000000:
                         print (str(sys.getsizeof(self.index))+"\n")
                         nb_index_file += 1
@@ -135,27 +127,71 @@ class IndexInverse:
             self.writeFileIndex(index_file)
             print nb_index_file
 
+#mergeIndex Blocked sort-based indexing
 def mergeIndex(files_folder, index_file):
     files = [f for f in listdir(files_folder) if isfile(join(files_folder,f)) and splitext(f)[0].isdigit()]
-    files = sorted(files)
-    index = defaultdict(list)
+    files = sorted(files, key=lambda item:int(splitext(item)[0]))
+    line_dict = defaultdict(list)
+    list_fread = []
+    open(index_file, 'w').close()
+    pos = 0
     for file in files:
-        f_read = open(files_folder+file,"r")
-        for line in f_read:
-            line = line.rstrip().split("||")
-            term = line[0].split("|")[0]
-            i = 1
-            while i<len(line):
-                doc = line[i].split("|")
-                index[term].append(doc)
-                i += 1
-        f_read.close()
-    index = sorted(index.items(), key = lambda item:item[0])
-    f_write = open(index_file,"w")
-    for term in index:
-        print >> f_write,term[0]+"|"+str(len(term[1]))+"||"+"||".join([doc[0]+"|"+doc[1] for doc in term[1]])
-    f_write.close()
-
+        list_fread.append(files_folder+file)
+        with open(list_fread[pos],"r") as f_read:
+            line = f_read.readline()
+            line = line.rstrip()
+            pos_firstvline = line.find("|")
+            pos_firstdbline = line.find("||",pos_firstvline+1)
+            term = line[:pos_firstvline]
+            nb_doc = int(line[pos_firstvline+1:pos_firstdbline])
+            posting_list = line[pos_firstdbline:]
+            last_pos_line = f_read.tell()
+            line_dict[pos] = [term,nb_doc,posting_list,last_pos_line]
+        pos +=1
+    sorted_term = sorted(line_dict.items(),key=lambda item:(item[1][0],item[0]))
+    while sorted_term:
+        term_write = []
+        for term_elem in sorted_term:
+            if term_write:
+                if term_elem[1][0] == term_write[0]:
+                    term_write[1] += term_elem[1][1]
+                    term_write[2] += term_elem[1][2]
+                    with open(list_fread[term_elem[0]],"r") as f_read:
+                        f_read.seek(line_dict[term_elem[0]][-1])
+                        next_line = f_read.readline()
+                        next_line = next_line.rstrip()
+                        if next_line:
+                            pos_firstvline = next_line.find("|")
+                            pos_firstdbline = next_line.find("||",pos_firstvline+1)
+                            term = next_line[:pos_firstvline]
+                            nb_doc = int(next_line[pos_firstvline+1:pos_firstdbline])
+                            posting_list = next_line[pos_firstdbline:]
+                            last_pos_line = f_read.tell()
+                            line_dict[term_elem[0]] = [term,nb_doc,posting_list,last_pos_line]
+                        else:
+                            del line_dict[term_elem[0]]
+                else:
+                    break
+            else:
+                term_write = term_elem[1]
+                with open (list_fread[term_elem[0]],"r") as f_read:
+                    f_read.seek(line_dict[term_elem[0]][-1])
+                    next_line = f_read.readline()
+                    next_line = next_line.rstrip()
+                    if next_line:
+                        pos_firstvline = next_line.find("|")
+                        pos_firstdbline = next_line.find("||",pos_firstvline+1)
+                        term = next_line[:pos_firstvline]
+                        nb_doc = int(next_line[pos_firstvline+1:pos_firstdbline])
+                        posting_list = next_line[pos_firstdbline:]
+                        last_pos_line = f_read.tell()
+                        line_dict[term_elem[0]] = [term,nb_doc,posting_list,last_pos_line]
+                    else:
+                        del line_dict[term_elem[0]]
+        with open(index_file, "a") as f_write:
+            f_write.write(term_write[0]+"|"+str(term_write[1])+term_write[2]+"\n")
+        sorted_term = sorted(line_dict.items(),key=lambda item:(item[1][0],item[0]))
+#
 
 if __name__== "__main__":
     param=sys.argv
@@ -166,6 +202,7 @@ if __name__== "__main__":
             index = IndexInverse()
             index.createIndex(param)
     else:
-        print "Erreur"
+        erreur = str(struct.pack('i',222333))
+        print "Erreur" +erreur
 
 
