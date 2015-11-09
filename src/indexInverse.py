@@ -6,6 +6,7 @@ import sys
 import re
 import struct
 import time
+import math
 from os import listdir, makedirs, remove
 from os.path import isfile, join, splitext, exists
 from collections import defaultdict
@@ -13,7 +14,7 @@ from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 from blist import sorteddict
 
-porter_stemmer=PorterStemmer()
+porter_stemmer = PorterStemmer()
 
 class IndexInverse:
     def __init__(self):
@@ -59,30 +60,28 @@ class IndexInverse:
 
     #écire les petits fichiers index quand la taille de l'index dépasse 1mo
     def writeBinaryFileIndex(self,index_file):
-        file_index = open(self.indexFolder+index_file, 'wb')
-        file_term = open(self.termFolder+index_file+'.txt','w')
-        inverse_index = sorteddict(self.index)
-        self.index.clear()
-        pos_term = 0
-        for elem in inverse_index.items():
-            term = elem[0]
-            nb_doc = 0
-            docs_list = sorteddict(elem[1])
-            for doc in docs_list.items():
-                nb_doc += 1
-                doc_id = doc[0]
-                nb_occur = doc[1]
-                file_index.write(struct.pack('ii',doc_id,nb_occur))
-            file_term.write(term+"|"+str(nb_doc)+"|"+str(pos_term)+"\n")
-            pos_term += nb_doc
-        file_index.close()
-        file_term.close()
+        with open(self.indexFolder+index_file, 'wb') as file_index:
+            with open(self.termFolder+index_file+'.txt','w') as file_term:
+                inverse_index = sorteddict(self.index)
+                self.index.clear()
+                pos_term = 0
+                for elem in inverse_index.items():
+                    term = elem[0]
+                    nb_doc = 0
+                    docs_list = sorteddict(elem[1])
+                    for doc in docs_list.items():
+                        nb_doc += 1
+                        doc_id = doc[0]
+                        nb_occur = doc[1]
+                        file_index.write(struct.pack('ii',doc_id,nb_occur))
+                    file_term.write(term+"|"+str(nb_doc)+"|"+str(pos_term)+"\n")
+                    pos_term += nb_doc
 
     def getParams(self,param):
         self.docsFolder=param[2] #répertoire contient les fichiers docs (latimes)
-        self.indexFolder=param[3] #répertoire à écrire les fichiers indexs
+        self.indexFolder=param[3] #répertoire à écrire les fichiers indexés
         self.mapFile = param[4] #fichier à écrire les correspondances des nouveaux docids
-        self.termFolder = self.indexFolder+'term/' #répertoire à écrire les fichiers de vocabulaires (taille de postingslist et offset dans les fichiers indexs)
+        self.termFolder = self.indexFolder+'term/' #répertoire à écrire les fichiers de vocabulaires (taille de postingslist et offset dans les fichiers indexés)
         if not exists(self.indexFolder):
             makedirs(self.indexFolder)
         if not exists(self.termFolder):
@@ -96,46 +95,50 @@ class IndexInverse:
         files = sorted(files)
         nb_index_file = 0
         doc_id =0 #doc id recompté par rapport à l'ordre d'apparaître
-        mapFile_write = open(self.mapFile,"w")
-        for file in files:
-            file_name = splitext(file)[0]
-            print 'En cours '+file_name
-            with open(docs_path+file,'r') as f_read:
-                self.file_data = f_read
-                doc_dict=self.getDoc()
-                while doc_dict != {}:
-                    doc_content = doc_dict['content']
-                    doc_text = ''
-                    doc_id += 1
-                    for p_content in doc_content.values():
-                        doc_text += p_content
-                    docID = doc_dict['doc_id'].strip()
-                    print >> mapFile_write, str(doc_id) + ":" + file_name + "-" + docID
-                    terms = self.getTerms(doc_text)
-                    #construire index pour le doc courant
-                    for term in terms:
-                    #ajouter index du document courant à l'index global
-                        try:
-                            #incrémenter le nombre d'occurences
-                            self.index[term][doc_id] += 1
-                        except KeyError:
-                            #initialiser le nombre d'occurences pour le terme "term" dans le doc "doc_id"
-                            self.index[term][doc_id] = 1
+        with open(self.mapFile,"w") as mapFile_write:
+            for file in files:
+                file_name = splitext(file)[0]
+                print 'En cours '+file_name
+                with open(docs_path+file,'r') as f_read:
+                    self.file_data = f_read
+                    doc_dict=self.getDoc()
+                    while doc_dict != {}:
+                        doc_content = doc_dict['content']
+                        doc_text = ''
+                        doc_id += 1
+                        for p_content in doc_content.values():
+                            doc_text += p_content
+                        terms = self.getTerms(doc_text)
+                        docID = doc_dict['doc_id'].strip()
+                        #construire index pour le doc courant
+                        for term in terms:
+                        #ajouter index du document courant à l'index global
+                            try:
+                                #incrémenter le nombre d'occurences
+                                self.index[term][doc_id] += 1
+                            except KeyError:
+                                #initialiser le nombre d'occurences pour le terme "term" dans le doc "doc_id"
+                                self.index[term][doc_id] = 1
+                        norm_vector_doc = 0
+                        set_terms = set(terms)
+                        for term_elem in set_terms:
+                            norm_vector_doc += math.pow(self.index[term_elem][doc_id],2)
+                        print >> mapFile_write, str(doc_id) + ":" + file_name + "|" + docID + "|"+ str(len(terms))+"|"+str(math.sqrt(norm_vector_doc))
                         #Verifier si la taille de l'index dépasse 1mo
                         if sys.getsizeof(self.index) > 1000000:
                             nb_index_file += 1
                             index_file = str(nb_index_file)
                             self.writeBinaryFileIndex(index_file)
-                    doc_dict = self.getDoc()
-        if self.index:
-            nb_index_file += 1
-            index_file = str(nb_index_file)
-            self.writeBinaryFileIndex(index_file)
-        self.mergeBinaryIndex()
+                        doc_dict = self.getDoc()
+            if self.index:
+                nb_index_file += 1
+                index_file = str(nb_index_file)
+                self.writeBinaryFileIndex(index_file)
+            self.mergeBinaryIndex()
 
 #mergeIndex Blocked sort-based indexing
     def mergeBinaryIndex(self):
-        #le répertoire contient les fichiers indexs
+        #le répertoire contient les fichiers indexés
         index_folder = self.indexFolder
         #le répertoire contient les fichiers de vocabulaires (la taille de postingslist et l'offset
         term_folder = self.termFolder
@@ -227,21 +230,19 @@ class IndexInverse:
         return [term,nb_doc,posting_list]
 
 def writeTextIndexFromBinaryIndex (b_index_file, term_file, t_index_file):
-    open(t_index_file,"w").close()
-    with open(term_file,"r") as term_f:
-        while True:
-            term_line = term_f.readline()
-            if not term_line:
-                break
-            with open(t_index_file,"a") as t_index_f_write:
-                term_arr = term_line.rstrip().split("|")
-                t_index_f_write.write(term_arr[0]+"|"+term_arr[1])
-                with open(b_index_file,"rb") as b_index_f:
-                    b_index_f.seek(int(term_arr[2])*8)
-                    for i in range(int(term_arr[1])):
-                        doc_id = str(struct.unpack("i",b_index_f.read(4))[0])
-                        nb_occ = str(struct.unpack("i",b_index_f.read(4))[0])
-                        t_index_f_write.write("||" + doc_id + "|" + nb_occ)
+    with open(t_index_file,"w") as t_index_f_write:
+        with open(b_index_file,"rb") as b_index_f:
+            with open(term_file,"r") as term_f:
+                for term_line in term_f:
+                    term_arr = term_line.rstrip().split("|")
+                    term = term_arr[0]
+                    nb_docs_containing = term_arr[1]
+                    t_index_f_write.write(term+"|"+nb_docs_containing)
+                    nb_docs_containing = int(term_arr[1])
+                    for i in range(nb_docs_containing):
+                        doc_id = struct.unpack("i",b_index_f.read(4))[0]
+                        nb_occ = struct.unpack("i",b_index_f.read(4))[0]
+                        t_index_f_write.write("||" + str(doc_id) + "|" + str(nb_occ))
                     t_index_f_write.write("\n")
 
 if __name__== "__main__":
@@ -251,8 +252,9 @@ if __name__== "__main__":
             start_time = time.time()
             index = IndexInverse()
             index.createBinaryIndex(param)
-            print "Temps d'execution en secondes: "+ str((time.time() - start_time))
+            print "Temps d'execution en secondes: " + str((time.time() - start_time))
         elif param[1] == 'b_to_t_index':
+            #parametres : fichier indexé binaire, le fichier text des termes (vocabulaires), le fichier indexé texte sorti
             writeTextIndexFromBinaryIndex(param[2], param[3], param[4])
         else:
             print "Erreur"
