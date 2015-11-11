@@ -7,11 +7,11 @@ import re
 import struct
 import time
 import math
+from nltk.corpus import stopwords
+from nltk.stem.porter import PorterStemmer
 from os import listdir, makedirs, remove
 from os.path import isfile, join, splitext, exists
 from collections import defaultdict
-from nltk.corpus import stopwords
-from nltk.stem.porter import PorterStemmer
 from blist import sorteddict
 
 porter_stemmer = PorterStemmer()
