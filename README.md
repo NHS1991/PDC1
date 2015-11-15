@@ -1,1 +1,1 @@
-# PDC1
+Algorithmes et structures de données pour l’indexation de grands volumes de données textuelles

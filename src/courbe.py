@@ -8,8 +8,8 @@ import math
 if __name__ == '__main__':
     if len(sys.argv) == 5:
         s = float(sys.argv[2]) #Le parametre s de la loi de Zipf
-        img_out_path = sys.argv[4] #Le nom du fichier d'image sorti
-        with open(sys.argv[3],"w") as f_write_freq: #Créer un fichier sorti avec les termes triés par leur fréquence (nombre d'occurrences), chaque ligne contient le terme, le nombre de document contient ce terme,le nombre d'occurences de ce terme dans tous les fichiers
+        img_out_path = sys.argv[4] #Le nom du fichier d'image sortie
+        with open(sys.argv[3],"w") as f_write_freq: #Créer un fichier sortie avec les termes triés par leur fréquence (nombre d'occurrences), chaque ligne contient le terme, le nombre de document contient ce terme,le nombre d'occurences de ce terme dans tous les fichiers
             #Lire le fichier index texte
             with open(sys.argv[1],"r") as f_read:
                 list_fr = []  # liste de fréquence trié par le nombre d'occurences

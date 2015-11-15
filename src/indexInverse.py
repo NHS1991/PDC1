@@ -85,11 +85,11 @@ class IndexInverse:
 
     def getParams(self,param):
         self.docsFolder=param[2] #répertoire contient les fichiers docs (latimes)
-        self.indexFolder=param[3] #répertoire à écrire les fichiers indexes
+        self.indexFolder=param[3] #répertoire à écrire les fichiers indexs
         self.mapFile = param[4] #fichier à écrire les correspondances des nouveaux docids
-        self.termFolder = self.indexFolder+'term/' #répertoire à écrire les fichiers de vocabulaires (taille de postingslist et offset dans les fichiers indexes)
+        self.termFolder = self.indexFolder+'term/' #répertoire à écrire les fichiers de vocabulaires (taille de postingslist et offset dans les fichiers indexs)
         if not exists(self.indexFolder):
-            makedirs(self.indexFolder) #Créer le répertoire contenant les fichiers indexes s'il n'existe pas
+            makedirs(self.indexFolder) #Créer le répertoire contenant les fichiers indexs s'il n'existe pas
         if not exists(self.termFolder):
             makedirs(self.termFolder) #Créer le répertoire contenant les fichiers vocabulaires s'il n'existe pas
 
@@ -132,24 +132,24 @@ class IndexInverse:
                         for term_elem in set_terms:
                             norm_vector_doc += math.pow(self.index[term_elem][doc_id],2)
                         print >> mapFile_write, str(doc_id) + ":" + file_name + "|" + docID + "|"+ str(len(terms))+"|"+str(math.sqrt(norm_vector_doc)) #Écrire une ligne dans le fichier contenant la réindexation de docID avec le nombre de terme de ce doc et sa nomre du vecteur construit par les fréquences de chaque terme
-                        #Vérifier si la taille de l'index dépasse 1mo et écrire dans le disque un petit fichier indexé binaire et un fichier de vocabulaire correspondant
+                        #Vérifier si la taille de l'index dépasse 1mo et écrire dans le disque un petit fichier index binaire et un fichier de vocabulaire correspondant
                         if sys.getsizeof(self.index) > 1000000:
                             nb_index_file += 1
                             index_file = str(nb_index_file)
                             self.writeBinaryFileIndex(index_file)
                         #Lire un nouveau document dans le fichier texte courant
                         doc_dict = self.getDoc()
-            #Écrire le dernier fichier indexé binaire au cas ou la taille de l'index ne dépasse pas encore 1mo
+            #Écrire le dernier fichier index binaire au cas ou la taille de l'index ne dépasse pas encore 1mo
             if self.index:
                 nb_index_file += 1
                 index_file = str(nb_index_file)
                 self.writeBinaryFileIndex(index_file)
-            #Faire un merge les petits fichiers indexes binaires
+            #Faire un merge les petits fichiers indexs binaires
             self.mergeBinaryIndex()
 
 #mergeIndex Blocked sort-based indexing
     def mergeBinaryIndex(self):
-        #le répertoire contient les fichiers indexes
+        #le répertoire contient les fichiers indexs
         index_folder = self.indexFolder
         #le répertoire contient les fichiers de vocabulaires (la taille de postingslist et l'offset
         term_folder = self.termFolder
@@ -274,7 +274,7 @@ if __name__== "__main__":
             print "Temps d'execution en secondes: " + str((time.time() - start_time))
         # Convertir l'index binaire en texte
         elif param[1] == 'b_to_t_index':
-            #parametres : fichier indexé binaire, le fichier text des termes (vocabulaires), le fichier index texte sorti
+            #parametres : fichier index binaire, le fichier text des termes (vocabulaires), le fichier index texte sortie
             writeTextIndexFromBinaryIndex(param[2], param[3], param[4])
         else:
             print "Erreur"

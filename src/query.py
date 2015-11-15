@@ -97,7 +97,7 @@ if __name__ == "__main__":
         f_index = params[1] #fichier d'index
         f_term = params[2] #fichier des termes (vocabulaires)
         f_docID = params[3] #fichier des docIDs réindexés
-        f_result = params[4] #fichier de résultat sorti
+        f_result = params[4] #fichier de résultat sortie
         nb_scores = int(params[5]) #nombre de résultat retourné
         query = raw_input("Recherche:")
         topScores(query,f_index,f_term,f_docID,f_result,nb_scores)
