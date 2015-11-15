@@ -35,20 +35,24 @@ if __name__ == '__main__':
                 pos = 0
                 list_fr_zipf = []
                 for term_arr in list_fr_sort:
-                    list_fr.append(math.log(term_arr[2]))
+                    list_fr.append(term_arr[2])
                     #Écrire une ligne avec le terme, le nombre de docs contient le terme et le nombre d'occurrences
                     f_write_freq.write(term_arr[0]+"|"+str(term_arr[1])+"|"+str(term_arr[2])+"\n")
                     pos +=1
-                    list_fr_zipf.append(math.log(list_fr_sort[0][2]/(math.pow(pos,s)*harmonic_number)))
-                x = [math.log(pow(i,s)) for i in range(1,nb_terms+1)]
+                    list_fr_zipf.append(list_fr_sort[0][2]/(math.pow(pos,s)*harmonic_number))
+                x = [i for i in range(1,nb_terms+1)]
                 pyplot.figure(1)
-                pyplot.subplot(2,1,1)
                 pyplot.subplots_adjust(hspace = 1)
-                pyplot.plot(x,list_fr)
-                pyplot.title("Courbe log-log de la frequence en fonction du rang")
-                pyplot.subplot(2,1,2)
-                pyplot.plot(x,list_fr_zipf) #Loi de Zipf en théorie
-                pyplot.title("Loi de Zipf")
+                c1 = pyplot.subplot(2,1,1)
+                c1.set_xlabel('rang')
+                c1.set_ylabel(u'fréquence')
+                c1.set_title(u"En expérience")
+                c1.loglog(x,list_fr) #Trace une courbe avec une échelle log-log
+                c2 = pyplot.subplot(2,1,2)
+                c2.set_title(u"En théorie")
+                c2.set_xlabel('rang')
+                c2.set_ylabel(u'fréquence')
+                c2.loglog(x,list_fr_zipf) #Loi de Zipf en théorie dont la courbe avec une échelle log-log
                 pyplot.savefig(img_out_path)
     else:
         print('Erreur!')
