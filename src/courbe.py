@@ -15,11 +15,9 @@ if __name__ == '__main__':
                 list_fr = []  # liste de fréquence trié par le nombre d'occurences
                 list_fr_sort = [] #liste des termes avec leur fréquence et leur nombre de documents d'apparition, trié par le nombre d'occurences de terme
                 nb_terms = 0
-                harmonic_number = 0 #le nombre harmonique
                 for term_line in f_read:
                     nb_terms += 1
                     #Calculer le nombre harmonique
-                    harmonic_number += 1/(pow(nb_terms,s))
                     term_arr = term_line.split("||")
                     term = term_arr[0].split("|")[0] # le terme
                     nb_doc = int(term_arr[0].split("|")[1]) #le nombre de document contient ce terme
@@ -34,11 +32,11 @@ if __name__ == '__main__':
                 pos = 0
                 list_fr_zipf = []
                 for term_arr in list_fr_sort:
-                    list_fr.append(term_arr[2]/list_fr_sort[0][2])
+                    list_fr.append(term_arr[2])
                     #Écrire une ligne avec le terme, le nombre de docs contient le terme et le nombre d'occurrences
                     f_write_freq.write(term_arr[0]+"|"+str(term_arr[1])+"|"+str(term_arr[2])+"\n")
                     pos +=1
-                    list_fr_zipf.append(1/(math.pow(pos,s)*harmonic_number))
+                    list_fr_zipf.append(list_fr_sort[0][2]/(math.pow(pos,s)))
                 x = [i for i in range(1,nb_terms+1)]
                 pyplot.figure(1)
                 pyplot.subplots_adjust(hspace = 1)
