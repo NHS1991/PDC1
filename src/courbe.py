@@ -23,9 +23,8 @@ if __name__ == '__main__':
                     term_arr = term_line.split("||")
                     term = term_arr[0].split("|")[0] # le terme
                     nb_doc = int(term_arr[0].split("|")[1]) #le nombre de document contient ce terme
-                    freq = 0 #le nombre d'occurences de ce terme dans tous les fichiers
+                    freq = 0.0 #le nombre d'occurences de ce terme dans tous les fichiers
                     i = 1
-                    freq_in_doctfidf=0
                     while i<len(term_arr):
                         doc_arr = term_arr[i].split("|")
                         freq += int(doc_arr[1])
@@ -35,11 +34,11 @@ if __name__ == '__main__':
                 pos = 0
                 list_fr_zipf = []
                 for term_arr in list_fr_sort:
-                    list_fr.append(term_arr[2])
+                    list_fr.append(term_arr[2]/list_fr_sort[0][2])
                     #Écrire une ligne avec le terme, le nombre de docs contient le terme et le nombre d'occurrences
                     f_write_freq.write(term_arr[0]+"|"+str(term_arr[1])+"|"+str(term_arr[2])+"\n")
                     pos +=1
-                    list_fr_zipf.append(list_fr_sort[0][2]/(math.pow(pos,s)*harmonic_number))
+                    list_fr_zipf.append(1/(math.pow(pos,s)*harmonic_number))
                 x = [i for i in range(1,nb_terms+1)]
                 pyplot.figure(1)
                 pyplot.subplots_adjust(hspace = 1)
