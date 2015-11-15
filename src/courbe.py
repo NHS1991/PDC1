@@ -7,16 +7,18 @@ import math
 
 if __name__ == '__main__':
     if len(sys.argv) == 5:
-        s = float(sys.argv[2])
-        img_out_path = sys.argv[4]
-        with open(sys.argv[3],"w") as f_write_freq:
+        s = float(sys.argv[2]) #Le parametre s de la loi de Zipf
+        img_out_path = sys.argv[4] #Le nom du fichier d'image sorti
+        with open(sys.argv[3],"w") as f_write_freq: #Créer un fichier sorti avec les termes triés par leur fréquence (nombre d'occurrences), chaque ligne contient le terme, le nombre de document contient ce terme,le nombre d'occurences de ce terme dans tous les fichiers
+            #Lire le fichier index texte
             with open(sys.argv[1],"r") as f_read:
                 list_fr = []  # liste de fréquence trié par le nombre d'occurences
                 list_fr_sort = [] #liste des termes avec leur fréquence et leur nombre de documents d'apparition, trié par le nombre d'occurences de terme
                 nb_terms = 0
-                harmonic_number = 0
+                harmonic_number = 0 #le nombre harmonique
                 for term_line in f_read:
                     nb_terms += 1
+                    #Calculer le nombre harmonique
                     harmonic_number += 1/(pow(nb_terms,s))
                     term_arr = term_line.split("||")
                     term = term_arr[0].split("|")[0] # le terme
@@ -34,6 +36,7 @@ if __name__ == '__main__':
                 list_fr_zipf = []
                 for term_arr in list_fr_sort:
                     list_fr.append(math.log(term_arr[2]))
+                    #Écrire une ligne avec le terme, le nombre de docs contient le terme et le nombre d'occurrences
                     f_write_freq.write(term_arr[0]+"|"+str(term_arr[1])+"|"+str(term_arr[2])+"\n")
                     pos +=1
                     list_fr_zipf.append(math.log(list_fr_sort[0][2]/(math.pow(pos,s)*harmonic_number)))
@@ -41,10 +44,10 @@ if __name__ == '__main__':
                 pyplot.figure(1)
                 pyplot.subplot(2,1,1)
                 pyplot.subplots_adjust(hspace = 1)
-                pyplot.plot(x,list_fr)#list_rang,list_fr)
-                pyplot.title("Courbe de la frequence en fonction du rang")
+                pyplot.plot(x,list_fr)
+                pyplot.title("Courbe log-log de la frequence en fonction du rang")
                 pyplot.subplot(2,1,2)
-                pyplot.plot(x,list_fr_zipf)
+                pyplot.plot(x,list_fr_zipf) #Loi de Zipf en théorie
                 pyplot.title("Loi de Zipf")
                 pyplot.savefig(img_out_path)
     else:
